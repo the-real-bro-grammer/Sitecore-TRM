@@ -1,4 +1,4 @@
-import { TemplateFactory } from '../lib/util/template-factory';
+import { TemplateFactory } from '../lib/template-factory';
 import { camelCase } from '../lib/util/util';
 import { RawItem } from './raw-item';
 

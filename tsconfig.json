@@ -1,6 +1,7 @@
 {
     "compilerOptions": {
-        "target": "ES6",
+        "target": "es5",
+        "types": ["node"],
         "lib": ["dom", "dom.iterable", "esnext"],
         "allowJs": true,
         "declaration": true,
@@ -12,11 +13,9 @@
         "resolveJsonModule": true,
         "isolatedModules": true,
         "declarationMap": true,
-        "module": "esnext",
+        "module": "commonjs",
         "strict": false,
         "esModuleInterop": true,
-        "moduleResolution": "Node",
-        "incremental": true,
         "paths": {
             "@root/*": ["./*"],
             "@/*": ["./src/*"]

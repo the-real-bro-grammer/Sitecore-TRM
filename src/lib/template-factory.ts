@@ -19,9 +19,7 @@ export class TemplateFactory {
     private static templates: { [key: string]: TemplateType } = {};
 
     static RegisterTemplate(id: string, classType: TemplateType) {
-        return function (_constructor: Function) {
-            TemplateFactory.templates[id] = classType;
-        };
+        TemplateFactory.templates[id] = classType;
     }
 
     static GetStronglyTyped<TContentItem extends IContentItem>(item: RawItem): TContentItem {
