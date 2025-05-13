@@ -1,6 +1,6 @@
 {
     "name": "sitecore-trm",
-    "version": "0.1.8",
+    "version": "0.1.11",
     "description": "A lightweight TypeScript utility designed to simplify the development of headless Sitecore XM Cloud projects by using strongly typed models.",
     "author": "The Real BroGrammer",
     "license": "MIT",

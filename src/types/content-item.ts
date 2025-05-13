@@ -47,8 +47,13 @@ export class ContentItem implements IContentItem {
             }
 
             const searchField = camelCase(field.name);
+            let value: any = field.jsonValue;
 
-            Object.assign(this, { [searchField]: { value: field.jsonValue } });
+            if ('value' in field.jsonValue) {
+                value = field.jsonValue.value;
+            }
+
+            Object.assign(this, { [searchField]: { value } });
         }
     }
 }

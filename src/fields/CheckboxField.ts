@@ -1,1 +1,3 @@
-export class CheckboxField {}
+export class CheckboxField {
+    public value: boolean;
+}

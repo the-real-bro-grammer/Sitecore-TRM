@@ -1,9 +1,6 @@
+import { ComponentWithContextProps } from './component-props';
 import { IContentItem } from './content-item';
 
-export type Rendering = {
-    params: { [key: string]: string };
-};
-
-export type RenderingWithData<TDataSource extends IContentItem> = Rendering & {
+export type RenderingWithData<TDataSource extends IContentItem> = ComponentWithContextProps & {
     dataSource?: TDataSource;
 };

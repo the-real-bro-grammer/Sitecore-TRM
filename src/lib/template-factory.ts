@@ -1,11 +1,11 @@
-import { ComponentProps } from '@root/src/types/component-props';
+import { ComponentProps, ComponentWithContextProps } from '@root/src/types/component-props';
 import { IContentItem } from '@root/src/types/content-item';
 import { RawItem } from '@root/src/types/raw-item';
 import { RenderingWithData } from '@root/src/types/rendering';
 
 type TemplateType = new (item: RawItem) => IContentItem;
 
-type RawRenderingProps = ComponentProps & {
+type RawRenderingProps = ComponentWithContextProps & {
     fields: {
         data: {
             datasource: RawItem;
@@ -39,7 +39,7 @@ export class TemplateFactory {
         ): (componentProps: ComponentProps) => JSX.Element {
             return function (componentProps: RawRenderingProps): JSX.Element {
                 const props: RenderingWithData<TDataSource> = {
-                    params: componentProps.params
+                    ...componentProps
                 };
 
                 if (componentProps.fields?.data?.datasource) {
