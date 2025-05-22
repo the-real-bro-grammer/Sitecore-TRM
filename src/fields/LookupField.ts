@@ -1,21 +1,20 @@
-import { IContentItem } from '../types';
+import { ToRawItem } from '../lib';
+import { ContentItem, RawField, RawItem } from '../types';
+import { RawReferenceFieldValue } from '../types/raw-reference-field';
+import { CustomField } from './CustomField';
 
-export type LookupFieldValue = {
-    id: string;
-    url: string;
-    name: string;
-    displayName: string;
-};
+export class LookupField extends CustomField {
+    public value: RawReferenceFieldValue;
 
-export class LookupField {
-    private item?: IContentItem;
+    constructor(rawField: RawField) {
+        super(rawField);
+        this.value = rawField.jsonValue as RawReferenceFieldValue;
+    }
 
-    public value: LookupFieldValue;
-
-    public getItem(): IContentItem {
-        if (!this.item) {
-        }
-
-        return this.item;
+    public getItem<TContentItem extends ContentItem>(type: {
+        new (itemDetails: RawItem): TContentItem;
+    }): TContentItem {
+        const asRawItem = ToRawItem(this.value);
+        return new type(asRawItem);
     }
 }

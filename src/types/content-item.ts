@@ -1,3 +1,4 @@
+import { FieldLookup } from '../fields';
 import { TemplateFactory } from '../lib/template-factory';
 import { camelCase } from '../lib/util/util';
 import { RawItem } from './raw-item';
@@ -52,13 +53,19 @@ export class ContentItem implements IContentItem {
             }
 
             const searchField = camelCase(field.name);
-            let value: any = field.jsonValue;
 
-            if ('value' in field.jsonValue) {
-                value = field.jsonValue.value;
+            let fieldDetails;
+            if (field.definition?.type && field.definition.type in FieldLookup) {
+                fieldDetails = new FieldLookup[field.definition.type](field);
+            } else {
+                fieldDetails = { value: field.jsonValue };
+
+                if ('value' in field.jsonValue) {
+                    fieldDetails = { value: field.jsonValue.value };
+                }
             }
 
-            Object.assign(this, { [searchField]: { value } });
+            Object.assign(this, { [searchField]: fieldDetails });
         }
     }
 }
