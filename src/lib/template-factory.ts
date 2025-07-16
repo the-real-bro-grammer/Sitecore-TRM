@@ -13,6 +13,10 @@ type RawRenderingProps = ComponentWithContextProps & {
     };
 };
 
+type TypedRenderingOptions = {
+    emptyDatasource?: (props) => JSX.Element;
+};
+
 export interface TemplateRenderingOptions {}
 
 export class TemplateFactory {
@@ -23,6 +27,10 @@ export class TemplateFactory {
     }
 
     static GetStronglyTyped<TContentItem extends IContentItem>(item: RawItem): TContentItem {
+        if (!item?.template?.id) {
+            return null;
+        }
+
         const compatableType = TemplateFactory.templates[item.template.id];
 
         if (!compatableType) {
@@ -33,7 +41,7 @@ export class TemplateFactory {
         return new compatableType(item) as TContentItem;
     }
 
-    static TypedRendering<TDataSource extends IContentItem>() {
+    static TypedRendering<TDataSource extends IContentItem>(options?: TypedRenderingOptions) {
         return function (
             component: (props: RenderingWithData<TDataSource>) => JSX.Element
         ): (componentProps: ComponentProps) => JSX.Element {
@@ -42,10 +50,16 @@ export class TemplateFactory {
                     ...componentProps
                 };
 
-                if (componentProps.fields?.data?.datasource) {
-                    props.dataSource = TemplateFactory.GetStronglyTyped<TDataSource>(
-                        componentProps?.fields?.data?.datasource
+                props.dataSource = TemplateFactory.GetStronglyTyped<TDataSource>(
+                    componentProps?.fields?.data?.datasource
+                );
+
+                if (!props.dataSource && options?.emptyDatasource) {
+                    console.warn(
+                        `Datasource requested is null for component ${props?.rendering?.componentName} and UID ${props?.rendering?.uid}`
                     );
+
+                    return options.emptyDatasource(props);
                 }
 
                 return component(props);

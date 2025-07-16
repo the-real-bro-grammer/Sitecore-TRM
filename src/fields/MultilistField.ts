@@ -1,4 +1,4 @@
-import { ToRawItem } from '../lib';
+import { TemplateFactory, ToRawItem } from '../lib';
 import { ContentItem, IContentItem, RawField, RawItem } from '../types';
 import { RawReferenceFieldValue } from '../types/raw-reference-field';
 import { CustomField } from './CustomField';
@@ -23,5 +23,16 @@ export class MultilistField extends CustomField {
         }
 
         return this.items as TContentItem[];
+    }
+
+    public getUniqueItems(): IContentItem[] {
+        if (!this.items) {
+            this.items = this.value?.map((v) => {
+                const asRawItem = ToRawItem(v);
+                return TemplateFactory.GetStronglyTyped(asRawItem);
+            });
+        }
+
+        return this.items;
     }
 }
