@@ -1,56 +1,84 @@
-# TRM usage
+# Sitecore TRM
 
-## Install the packages
+Lightweight TypeScript helpers for Sitecore XM Cloud / Next.js projects that turn GraphQL rendering
+data into strongly typed models and reduce casting/null-check noise in components.
 
--   Dependencies are already listed, but new environments can run:
+## What the library provides
 
-```bash
-npm install sitecore-trm sitecore-trm-generator
+-   Template registration and lookup via `TemplateFactory`, converting raw GraphQL items into typed
+    classes.
+-   A React HOC (`TemplateFactory.TypedRendering`) that hydrates `datasource` and `pageContext` into
+    strongly typed props and can render a fallback when a datasource is missing.
+-   Typed field wrappers (text, rich text, image, checkbox, number/integer, date, lookup, multilist,
+    name/value list) that also carry Experience Editor metadata when requested.
+-   A base `ContentItem` with `getChildren()` plus helpers on multilist/lookup fields to traverse
+    relationships without manual casting.
+
+## Prerequisites
+
+-   Node 18+ and TypeScript (package targets TS 5.4).
+-   Next.js 14 and `@sitecore-jss/sitecore-jss-nextjs` 22.x (used by the rendering helper).
+-   Access to your Sitecore XM Cloud GraphQL endpoint to produce an introspection JSON file.
+
+## Installation
+
+-   Runtime: `npm install sitecore-trm`
+-   Model generation (recommended): `npm install --save-dev sitecore-trm-generator`
+
+## Generate strongly typed models (consumer app)
+
+Use the `sitecore-trm-generator` package in your Next.js app to emit `src/types/Generated.ts`
+containing template interfaces, classes, and a `RegisterTemplates()` helper (optional).
+
+1. Export GraphQL introspection to a file your project can read (commonly
+   `src/temp/GraphQLIntrospectionResult.json`).
+2. Add a generator entry point (example `scripts/generate-template-code.ts`):
+
+```ts
+import { generateModels } from 'sitecore-trm-generator';
+
+generateModels({
+    includePaths: ['src/components/**/*.tsx'], // where your renderings live
+    introspectionPath: 'src/temp/GraphQLIntrospectionResult.json',
+    outputPath: 'src/types/Generated.ts',
+    baseItemPath: 'src/types/content-item' // optional: custom base item path
+});
 ```
 
--   The generator reads your Sitecore GraphQL introspection JSON (kept at
-    `src/temp/GraphQLIntrospectionResult.json` here). Refresh it with `npm run graphql:update`
-    before regenerating models when schemas change.
+3. Wire up scripts in your app:
 
-## Generate the strongly typed models
-
--   The generator entry is `scripts/generate-template-code.ts`; it calls `generateModels` from
-    `sitecore-trm-generator` with project-specific include paths and writes to
-    `src/types/Generated.ts`.
--   To rebuild the models only, run:
-
-```bash
-npm run model:generate
+```json
+"scripts": {
+  "model:generate": "ts-node --project tsconfig.json scripts/generate-template-code.ts",
+  "graphql:update": "jss graphql --introspection > src/temp/GraphQLIntrospectionResult.json",
+  "model:update": "npm run graphql:update && npm run model:generate"
+}
 ```
 
--   To refresh introspection and regenerate in one go:
+4. Run `npm run model:generate` after schema/template changes. `RegisterTemplates()` maps template
+   IDs to the generated classes through `TemplateFactory.RegisterTemplate`.
 
-```bash
-npm run model:update
+## Register templates at startup
+
+Call the generated `RegisterTemplates()` once (for example in `_app.tsx`):
+
+```ts
+import { RegisterTemplates } from 'src/types/Generated';
+
+RegisterTemplates();
 ```
-
--   `src/types/Generated.ts` contains:
-    -   Interfaces and classes for every template.
-    -   A `RegisterTemplates` function that maps template IDs to those classes via
-        `TemplateFactory.RegisterTemplate`.
-    -   Imports of your custom base `ContentItem`/`IContentItem` (see the extended base in
-        `src/types/Generated.ts` for the exact path). If you change your base item, update the
-        generator header in `src/lib/extensions/trm-generator-extensions.ts`.
--   Call `RegisterTemplates()` once during app startup so renderings can be typed (see `_app.tsx`
-    for a working example).
 
 ## Use in components
 
--   Wrap components with `TemplateFactory.TypedRendering` to automatically convert
-    `fields.data.datasource` and/or `fields.data.pageContext` into strongly typed items using the
-    mappings registered above. An optional `emptyDatasource` callback lets you render a fallback
-    when the data source is missing.
+-   Wrap renderings with `TemplateFactory.TypedRendering` to automatically convert
+    `fields.data.datasource` and/or `fields.data.pageContext` to typed items. An optional
+    `emptyDatasource` callback can render a fallback when nothing is assigned.
 -   Typing helpers:
-    -   `RenderingWithData<TDataSource>` adds an optional `dataSource` of the provided type.
-    -   `RenderingWithContext<TPageContext>` adds an optional `pageContext` of the provided type.
-    -   `RenderingWithDataAndContext<TDataSource, TPageContext>` combines both when you need each.
+    -   `RenderingWithData<TDataSource>` adds an optional `dataSource`.
+    -   `RenderingWithContext<TPageContext>` adds an optional `pageContext`.
+    -   `RenderingWithDataAndContext<TDataSource, TPageContext>` combines both.
 
-### Example: data source rendering
+### Datasource example
 
 ```tsx
 import { RenderingWithData, TemplateFactory } from 'sitecore-trm';
@@ -64,7 +92,7 @@ const FeaturedBlogs = (props: RenderingWithData<I_FeaturedBlogsItem>) => {
 export default TemplateFactory.TypedRendering<I_FeaturedBlogsItem>()(FeaturedBlogs);
 ```
 
-### Example: page context rendering
+### Page context example
 
 ```tsx
 import { RenderingWithContext, TemplateFactory } from 'sitecore-trm';
@@ -78,23 +106,26 @@ const BlogHeader = (props: RenderingWithContext<I_BlogPageItem>) => {
 export default TemplateFactory.TypedRendering<I_BlogPageItem>()(BlogHeader);
 ```
 
-## Converting raw items manually
-
--   When you obtain raw GraphQL items outside a rendering wrapper (for example, transforming search
-    results), convert them with:
+### Converting raw items manually
 
 ```ts
 import { TemplateFactory } from 'sitecore-trm';
 
-const typed = TemplateFactory.GetStronglyTyped<MyItem>(rawItem, true);
+const typed = TemplateFactory.GetStronglyTyped<MyItem>(rawItem, true); // second arg sets editor metadata
 ```
 
--   This uses the same registration map from `RegisterTemplates` and returns an instance of the
-    generated class with typed fields and helper methods.
+## Field helpers at a glance
 
-## Working with the generated classes
+-   Supported Sitecore field types: Single/Multi-Line Text, Rich Text, Image, Checkbox,
+    Integer/Number, Date, Droplist/Droplink/Droptree/Lookup, Multilist (incl. Search/Tag/Multiroot),
+    Name Value List.
+-   `setMetadata` populates Experience Editor metadata (field id/type, datasource
+    id/language/version) on custom fields when `TemplateFactory.GetStronglyTyped(..., true)` is
+    used.
+-   `MultilistField.getItems()` and `getUniqueItems()` plus `LookupField.getItem()` help traverse
+    relationships without manual casting of `jsonValue`.
 
--   Import interfaces/classes from `src/types/Generated.ts` to type component props and to traverse
-    relationships (e.g., `item.relatedItems?.getItems(RelatedItem)`).
--   Regenerate `src/types/Generated.ts` whenever templates or the GraphQL schema change to keep
-    typings and registrations in sync.
+## Local scripts (in this repo)
+
+-   `npm run build` - compile TypeScript to `dist`.
+-   `npm test` - run Jest (currently covers name/value list parsing).
