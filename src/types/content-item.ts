@@ -24,13 +24,15 @@ export class ContentItem implements IContentItem {
     public sortOrder: number;
     public dateCreated: Date;
     public dateUpdated: Date;
+    private setMetadata: boolean;
 
     rawValue: RawItem;
 
-    constructor(itemDetails: RawItem) {
+    constructor(itemDetails: RawItem, setMetadata: boolean = false) {
         this.name = itemDetails.name;
         this.id = itemDetails.id;
         this.url = itemDetails.url;
+        this.setMetadata = setMetadata;
 
         this.rawValue = itemDetails;
         this.registerFields();
@@ -43,7 +45,7 @@ export class ContentItem implements IContentItem {
 
         return this.rawValue.children.results
             .map((r) => {
-                return TemplateFactory.GetStronglyTyped<TContentItem>(r);
+                return TemplateFactory.GetStronglyTyped<TContentItem>(r, this.setMetadata);
             })
             .filter((r) => r != null);
     }
@@ -68,7 +70,10 @@ export class ContentItem implements IContentItem {
             let fieldDetails;
             let customField = GetCustomField(field);
             if (customField !== null) {
-                customField.setMetadata(this.rawValue);
+                if (this.setMetadata) {
+                    customField.setMetadata(this.rawValue);
+                }
+
                 fieldDetails = customField;
             } else if ('value' in field.jsonValue) {
                 fieldDetails = { value: field.jsonValue.value };

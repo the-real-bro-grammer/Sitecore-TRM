@@ -12,9 +12,10 @@ export class LookupField extends CustomField {
     }
 
     public getItem<TContentItem extends ContentItem>(type: {
-        new (itemDetails: RawItem): TContentItem;
+        new (itemDetails: RawItem, setMetadata: boolean): TContentItem;
     }): TContentItem {
         const asRawItem = ToRawItem(this.value);
-        return new type(asRawItem);
+        const hasMetadata = this.metadata !== null;
+        return new type(asRawItem, hasMetadata);
     }
 }

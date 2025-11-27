@@ -29,8 +29,13 @@ export abstract class CustomField implements FieldMetadata, ICustomField {
         const formattedDatasourceId = formatGuid(item.id);
         const formattedFieldId = formatGuid(this.rawField.definition?.id);
 
+        let title = this.rawField.definition?.title;
+        if (!title || !title.length) {
+            title = this.name;
+        }
+
         this.metadata = {};
-        this.metadata.title = this.rawField.definition?.title;
+        this.metadata.title = title;
         this.metadata.fieldId = formattedFieldId;
         this.metadata.fieldType = this.rawField.definition?.type;
 

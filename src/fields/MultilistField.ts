@@ -7,9 +7,22 @@ export class MultilistField extends CustomField {
     private items: IContentItem[];
     public value: RawReferenceFieldValue[];
 
-    constructor(rawField: RawField) {
-        super(rawField);
-        this.value = rawField.jsonValue as RawReferenceFieldValue[];
+    constructor(rawField: RawField | RawReferenceFieldValue[]) {
+        if ('name' in rawField) {
+            super(rawField);
+        } else {
+            super({
+                name: ''
+            });
+
+            this.value = rawField;
+        }
+
+        if ('jsonValue' in rawField) {
+            this.value = rawField.jsonValue as RawReferenceFieldValue[];
+        } else {
+            this.value = rawField as RawReferenceFieldValue[];
+        }
     }
 
     public getItems<TContentItem extends ContentItem>(type: {
@@ -29,7 +42,9 @@ export class MultilistField extends CustomField {
         if (!this.items) {
             this.items = this.value?.map((v) => {
                 const asRawItem = ToRawItem(v);
-                return TemplateFactory.GetStronglyTyped(asRawItem);
+                const hasMetadata = this.metadata !== null;
+
+                return TemplateFactory.GetStronglyTyped(asRawItem, hasMetadata);
             });
         }
 
